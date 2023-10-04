@@ -1,6 +1,3 @@
-// WeatherComponent.js
-
-
 import moment from 'moment';
 import React, { useState, useEffect } from 'react';
 import { useWeatherContext } from './WeatherContext';
@@ -8,19 +5,20 @@ import { useWeatherContext } from './WeatherContext';
 const WeatherComponent = () => {
   const { weatherData, loading, updateSearchCity } = useWeatherContext();
   const [searchCity, setSearchCity] = useState('');
-  const [checkDate,setCheckDate]=useState(correct_Date_TimE());
-  const [Apidata,setApiData]=useState(weatherData);
-  const[runEffect,setRunEffect]=useState(true)
-  useEffect(()=>{
-  
+  const [checkDate, setCheckDate] = useState(correct_Date_TimE());
+  const [Apidata, setApiData] = useState(weatherData);
+  const [runEffect, setRunEffect] = useState(true)
+  const [userSearch, setUserSearch] = useState(false)
+  let city_Nane = weatherData?.city?.name;
+
+  useEffect(() => {
     setApiData(weatherData);
-    console.log(weatherData,"Use Effecg is working");
-  },[runEffect,loading])
+  }, [runEffect, loading, city_Nane])
   /*                  date and time                      */
 
   function correct_Date_TimE() {
     const currentDateAndTime = new Date();
-   // currentDateAndTime.setHours('02');
+    // currentDateAndTime.setHours('02');
     currentDateAndTime.setMinutes('00');
     currentDateAndTime.setSeconds('00');
     let currentHours = currentDateAndTime.getHours();
@@ -36,14 +34,16 @@ const WeatherComponent = () => {
   }
   /*                                   date and time         */
 
-  let city_Nane = weatherData?.city?.name;
+
 
   const handleDateChange = (e) => {
+    setUserSearch(true);
     const newDate = (e.target.value);
-   // console.log("Date is -> ",newDate)
     checkDate.setDate(newDate.toString());
     setCheckDate(checkDate);
     setRunEffect(!runEffect)
+
+
   };
 
   const handleTimeChange = (e) => {
@@ -51,6 +51,8 @@ const WeatherComponent = () => {
     checkDate.setHours(newTime.toString());
     setCheckDate(checkDate);
     setRunEffect(!runEffect)
+    setUserSearch(true);
+    // console.log(userSearch," -> -> -> ");
   };
 
   const find_City = (event) => {
@@ -63,21 +65,21 @@ const WeatherComponent = () => {
     setSearchCity('');
   }
 
-      function get_Date(date){
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Add leading zero if needed
-  const day = String(date.getDate()).padStart(2, '0'); // Add leading zero if needed
-  let formattedDate = `${year}-${month}-${day}`;
-   return formattedDate;
-      }
-      function get_Time(date){
-  // Get the time in the format "HH:MM:SS"
-  const hours = String(date.getHours()).padStart(2, '0'); // Add leading zero if needed
-  const minutes = String(date.getMinutes()).padStart(2, '0'); // Add leading zero if needed
-  const seconds = String(date.getSeconds()).padStart(2, '0'); // Add leading zero if needed
-  const formattedTime = `${hours}:${minutes}:${seconds}`;
-          return formattedTime;
-}
+  function get_Date(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    let formattedDate = `${year}-${month}-${day}`;
+    return formattedDate;
+  }
+  function get_Time(date) {
+    // Get the time in the format "HH:MM:SS"
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    const formattedTime = `${hours}:${minutes}:${seconds}`;
+    return formattedTime;
+  }
   if (loading) {
 
     return (
@@ -100,7 +102,7 @@ const WeatherComponent = () => {
   return (
     <div>
       <div className="bg-blue-500 p-4 text-white flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Hourly Weather Report for {city_Nane} </h1>
+        <h1 className="text-2xl font-bold">Weather Report for {city_Nane} </h1>
 
         <div className="flex items-center space-x-4">
           <label htmlFor="date" className="text-gray-700 text-sm font-bold">
@@ -111,7 +113,7 @@ const WeatherComponent = () => {
             value=''
             onChange={handleDateChange}
             className="px-4 py-2 border-none bg-blue-500 text-gray-700">
-            <option value="">Select date</option>
+            <option value="">{get_Date(checkDate)}</option>
             <option value="04">2023-10-04</option>
             <option value="05">2023-10-05</option>
             <option value="06">2023-10-06</option>
@@ -127,15 +129,15 @@ const WeatherComponent = () => {
             value=''
             onChange={handleTimeChange}
             className="px-4 py-2 border-none text-gray-700 bg-blue-500">
-            <option value=""> Select Time</option>
+            <option value=""> {get_Time(checkDate) === '00:00:00' ? 'All' : get_Time(checkDate)}</option>
             <option value="09">09:00:00</option>
             <option value="12">12:00:00</option>
             <option value="15">15:00:00</option>
             <option value="18">18:00:00</option>
             <option value="21">21:00:00</option>
-            <option value="00">00:00:00</option>
             <option value="03">03:00:00</option>
             <option value="06">06:00:00</option>
+            <option value="00">All</option>
           </select>
         </div>
 
@@ -157,44 +159,49 @@ const WeatherComponent = () => {
 
       <ul>
         {Apidata.list?.map((hourlyData, index) => { //  formatTimedigit formatDatedigit
-          let API_Time =new Date(hourlyData.dt_txt);
-        
-           if(API_Time.getFullYear() === checkDate.getFullYear() && API_Time.getMonth() === checkDate.getMonth() &&
-           API_Time.getDate() === checkDate.getDate() &&  API_Time.getHours() === checkDate.getHours() &&
-           API_Time.getMinutes() === checkDate.getMinutes()
-         ){
+          let API_Time = new Date(hourlyData.dt_txt);
+          // console.log(userSearch," -> -> -> ");
+          if (API_Time.getFullYear() === checkDate.getFullYear() &&
+            API_Time.getMonth() === checkDate.getMonth() &&
+            API_Time.getDate() === checkDate.getDate() &&
+            (
+              (!userSearch && API_Time.getHours() >= checkDate.getHours()) ||
+              (userSearch && API_Time.getHours() === checkDate.getHours())
+            ) &&
+            API_Time.getMinutes() === checkDate.getMinutes()
+          ) {
 
-          return (
-            <li
-              key={index}
-              className="w-1/2 p-4 m-4 rounded-lg shadow-md bg-gradient-to-r from-blue-200 via-blue-500 to-blue-200 text-gray-800 hover:bg-blue-400 hover:text-gray-900 mx-auto"
+            return (
+              <li
+                key={index}
+                className="w-1/2 p-4 m-4 rounded-lg shadow-md bg-gradient-to-r from-blue-200 via-blue-500 to-blue-200 text-gray-800 hover:bg-blue-400 hover:text-gray-900 mx-auto"
               >
-              <div className="flex flex-col items-center space-y-2">
-              <p>
-                  <span className="font-semibold">Date:</span> {get_Date(API_Time)}
-                </p>
-                <p>
-                  <span className="font-semibold">Time:</span> {get_Time(API_Time)}
-                </p>
-                <div className="flex items-center space-x-4">
-                  
-                  <p className="text-2xl font-semibold">{hourlyData.weather[0].description}</p>
+                <div className="flex flex-col items-center space-y-2">
+                  <p>
+                    <span className="font-semibold">Date:</span> {get_Date(API_Time)}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Time:</span> {get_Time(API_Time)}
+                  </p>
+                  <div className="flex items-center space-x-4">
+
+                    <p className="text-2xl font-semibold">{hourlyData.weather[0].description}</p>
+                  </div>
+
+                  <p>
+                    <span className="font-semibold">Temperature:</span> {hourlyData.main.temp}°C
+                  </p>
+                  <p>
+                    <span className="font-semibold">Wind:</span> {Math.round(hourlyData.wind.speed * 3.6)} km/h
+                  </p>
+                  {/* Add more details if needed */}
                 </div>
-                
-                <p>
-                  <span className="font-semibold">Temperature:</span> {hourlyData.main.temp}°C
-                </p>
-                <p>
-                  <span className="font-semibold">Wind:</span> {Math.round(hourlyData.wind.speed * 3.6)} km/h
-                </p>
-                {/* Add more details if needed */}
-              </div>
-            </li>
-          );
-          
-          
+              </li>
+            );
+
+
           }
-        } 
+        }
         )}
       </ul>
 
